@@ -20,9 +20,13 @@ cat_name = "output.fits"
 #     hdul[0].header
 #     print(hdul['SCI'].data)
 fontsize = 26
-
-with open('list_of_objects.test', 'r') as file:
+list_of_frames_file='list_of_frames'
+# list_of_frames_file='list_of_objects.test'
+#%%
+with open(list_of_frames_file, 'r') as file:
     for file in file:
+        if file[-2] == 'r':
+            continue
         frame_name=file[:-1]
         print(frame_name)
         
@@ -43,9 +47,12 @@ with open('list_of_objects.test', 'r') as file:
         tentative_fwhm = x[np.where(y == y.max())][0]
         (mu, sigma) = norm.fit(df['FLUX_RADIUS'])
         plt.plot(x, norm.pdf(x, tentative_fwhm, sigma))
+        plt.xlabel("FLUX_RADIUS")
+        plt.savefig(frame_name+"/fig_fwhm_estimation.png",dpi = 400)
+
         print('Tentative fwhm: ', tentative_fwhm)
         print('mu: ', mu, '\t sigma:', sigma)
-
+        
         #Making the preselection.
         #Little plot of the data. The redder, the more likely it is an extended source, the greener the more likely it is a psf.
         #Plot the colored data + rectangle encapsulating the preselection.
@@ -61,12 +68,36 @@ with open('list_of_objects.test', 'r') as file:
         
         mag_high = 24; mag_low = 20
         radius_low = tentative_fwhm + sigma; radius_high = 6
-        greater_than = df[np.logical_and(
+        selection_df = df[np.logical_and(
             np.logical_and(df['MAG_AUTO'] < mag_high, df['MAG_AUTO'] > mag_low),
             np.logical_and(df['FLUX_RADIUS'] > radius_low, df['FLUX_RADIUS'] < radius_high))]
+        selection_df.to_csv(frame_name+'/cleaned.csv',index=False)
         
+        #plot of square to verify rectangle.
         rectangle = plt.Rectangle((radius_low,mag_low), radius_high-radius_low, mag_high-mag_low, fc='none',ec="red")
         plt.gca().add_patch(rectangle)
         ax.set_title("MAG vs R for : "+frame_name+".  R = ("+str(round(radius_low,2))+', '+str(round(radius_high,2))+')', fontsize=28)
+        
+        print("## -- -- -- -- -- -- ##\n")
+        plt.savefig(frame_name+"/fig_selection.png",dpi = 400)
+        
+        #histogram of the magnitudes of the final selection.
+        selection_df = df[np.logical_and(df['FLUX_RADIUS'] > radius_low, df['FLUX_RADIUS'] < radius_high)]
+        plt.figure()
+        y, x, _ = plt.hist(selection_df['MAG_AUTO'], bins=int(round(len(selection_df)/400)),density=True)
+        # plt.xlim(0,18)
+        # y, x, _ = plt.hist(df['MAG_AUTO'], bins=int(round(len(selection_df)/400)),density=True)
+        plt.title("MAG hist for "+frame_name,fontsize=18)
+        tentative_fwhm = x[np.where(y == y.max())][0]
+        (mu, sigma) = norm.fit(df['MAG_AUTO'])
+        plt.plot(x, norm.pdf(x, mu, sigma))
+        plt.xlabel("MAG_AUTO")
+        plt.savefig('histograms/'+frame_name+"_MAG_hist.png",dpi = 400)
 
+        
+        
+        
+        
+        
+        
         
