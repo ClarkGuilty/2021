@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sun Nov 21 15:34:43 2021
+Created on Tue Nov 23 19:27:59 2021
 
 @author: Javier Alejandro Acevedo Barroso
 """
@@ -64,9 +64,9 @@ list_of_frames_file='list_of_frames'
 
 
 #%%
-bin_ranges = np.arange(20,24,0.5)
-size_of_mosaic = 2    
-
+bin_ranges = np.arange(0.6,0.8,0.05,dtype=np.float16)
+size_of_mosaic = 8    
+delta = bin_ranges[1] - bin_ranges[0]
 with open(list_of_frames_file, 'r') as file:
     for file in file:
         if file[-2] == 'u':
@@ -77,12 +77,12 @@ with open(list_of_frames_file, 'r') as file:
             w = wcs.WCS(hdul[0].header)
             df = pd.read_csv(frame_name+'/'+cat_name)
             for low_mag in bin_ranges:
-                sel_df = df[np.logical_and(df['MAG_AUTO'] > low_mag, df['MAG_AUTO'] < low_mag+0.5)]
+                sel_df = df[np.logical_and(df['ELLIPTICITY'] > low_mag, df['ELLIPTICITY'] < low_mag+delta)]
                 if np.sqrt(len(sel_df)) < 2:
                     continue
                 size_of_mosaic = int(np.sqrt(len(sel_df)))
                 iis = rng.choice(range(len(sel_df)), (size_of_mosaic,size_of_mosaic),replace=False)
-                np.savetxt('random_numbers/'+file+'.csv',iis,delimiter=',')
+                np.savetxt('random_numbers/'+file+'_ellip.csv',iis,delimiter=',')
                 fig = plt.figure(figsize=(8,8), dpi=400)
                 gridspec_kw = {'wspace':0.0001,
                                'hspace':0.01}
@@ -90,7 +90,7 @@ with open(list_of_frames_file, 'r') as file:
                 ax_array = fig.subplots(size_of_mosaic, size_of_mosaic,
                                         squeeze=True,gridspec_kw=gridspec_kw)
                 
-                fig.suptitle(frame_name+'          '+str(low_mag)+' < MAG < '+ str(low_mag+0.5),y=0.908,fontsize=20)
+                fig.suptitle(frame_name+'          '+str(low_mag)+' < MAG < '+ str(low_mag+delta),y=0.908,fontsize=20)
                 for i in range(iis.shape[0]):
                     for j in range(iis.shape[1]):
                         # print(i,j)
@@ -114,6 +114,6 @@ with open(list_of_frames_file, 'r') as file:
                     
                         image[indices1] = np.log10(image[indices1]) / (factor * 1.0)
                         ax_array[i,j].imshow(image, cmap='gray', origin='lower')
-                fig.savefig("mosaics/"+frame_name+'_'+str(low_mag)+'-'+str(low_mag+0.5)+'.png', dpi=400,bbox_inches='tight',pad_inches = 0)
-                fig.savefig(frame_name+"/"+str(low_mag)+'-'+str(low_mag+0.5)+'.png',bbox_inches='tight',pad_inches = 0)
+                fig.savefig("mosaics/"+frame_name+'_'+str(low_mag)+'-'+str(low_mag+delta)+'.png', dpi=400,bbox_inches='tight',pad_inches = 0)
+                fig.savefig(frame_name+"/ellip_"+str(low_mag)+'-'+str(low_mag+delta)+'.png',bbox_inches='tight',pad_inches = 0)
         

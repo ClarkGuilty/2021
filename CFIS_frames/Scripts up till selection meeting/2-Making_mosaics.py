@@ -65,11 +65,11 @@ list_of_frames_file='list_of_frames'
 
 #%%
 bin_ranges = np.arange(20,24,0.5)
-size_of_mosaic = 2    
+size_of_mosaic = 8    
 
 with open(list_of_frames_file, 'r') as file:
     for file in file:
-        if file[-2] == 'u':
+        if file[-2] == 'r':
             continue
         frame_name=file[:-1]
         print(frame_name)
@@ -78,12 +78,8 @@ with open(list_of_frames_file, 'r') as file:
             df = pd.read_csv(frame_name+'/'+cat_name)
             for low_mag in bin_ranges:
                 sel_df = df[np.logical_and(df['MAG_AUTO'] > low_mag, df['MAG_AUTO'] < low_mag+0.5)]
-                if np.sqrt(len(sel_df)) < 2:
-                    continue
-                size_of_mosaic = int(np.sqrt(len(sel_df)))
-                iis = rng.choice(range(len(sel_df)), (size_of_mosaic,size_of_mosaic),replace=False)
-                np.savetxt('random_numbers/'+file+'.csv',iis,delimiter=',')
-                fig = plt.figure(figsize=(8,8), dpi=400)
+                iis = rng.choice(range(len(sel_df)), (size_of_mosaic,size_of_mosaic))
+                fig = plt.figure(figsize=(10,10), dpi=400)
                 gridspec_kw = {'wspace':0.0001,
                                'hspace':0.01}
                 
